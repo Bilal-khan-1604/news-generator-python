@@ -101,8 +101,6 @@ def take_info():
     keyword = str(input("KEYWORD:\nEnter a keyword to search for: "))
 
     # Taking language input
-
-    time.sleep(1)
     print("\nLANGUAGE:\nDo you want to specify a language? (Y/N)")
     input_flag = str(input())
     language = 'en' if input_flag.upper() == 'N' else inputLanguage()
@@ -183,12 +181,12 @@ def inputLanguage():
             print("Please enter a valid language.")
             language_given = input("Enter the language to get results in: ").lower()
         for key, value in language_dict.items():
-            if language_given.lower() == str(key).lower():
+            if language_given.capitalize() == key:
                 return value
     except Exception as e:
         print("VALUE ERROR. The language is set to \"English\" by default.")
         return 'en'
 
 
-news_api = newsapi.NewsApiClient(api_key="7b8252e5a19d4283bb74bfe824d282c9")
+
 take_info()
