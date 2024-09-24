@@ -1,192 +1,154 @@
-# Use the NewsAPI and the request module to fetch the daily news related to different topics.
-# Go to https://newsapi.org/ and explore the various options to build your application
 import newsapi
-import time
+import time, inflect
 
 
 def repetition(which_func, headlines):
-    data = "news" if which_func == "headline_loader()" else "metadata"
-    repeat = str(input(f"\nWould you like to read more {data}?\nEnter 'Yes' or 'No':\n")).lower()
-    if repeat == "yes":
-        if which_func == "headline_metadata_loader()":
-            headline_metadata_loader(headlines)
-        elif which_func == "headline_loader()":
-            take_info()
-    elif repeat == "no":
-        if which_func == "headline_metadata_loader()":
-            repetition("headline_loader()", headlines)
-        elif which_func == "headline_loader()":
-            print("\nThank You! Have A Good Day.\nBYE BYE")
-            exit()
+    data = "news" if which_func == 0 else "details"
+    repeat = str(input(f"\nWould you like to read more {data}? (Y/n)\n")).lower()
+
+    if repeat == "y":
+        headline_details_loader(headlines) if which_func == 1 else take_info()
+    elif repeat == "n":
+        repetition(0, headlines) if which_func == 1 else print("\nThank You! Have A Good Day.\nBYE BYE")
     else:
         print("Please enter valid information.")
+        repetition(which_func, headlines)
 
 
-def headline_metadata_loader(headlines):
+def headline_details_loader(headlines):
+    def headline_details_loop(i,j):
+        print(f"\nHEADLINE NUMBER {i + 1}")
+        for ind, jnd in enumerate(list(dict(j).items())):
+            if ind == 0:
+                print(f"{str(list(jnd)[0]).upper()} : {list((dict(list(jnd)[1])).values())[1]}")
+            else:
+                print(f"{str(list(jnd)[0]).upper()} : {list(jnd)[1]}")
+
     which_headline = str(input(
-        "\nWhich headline do you want to see the metadata of? For the meatadata of all headlines, enter command \"All\". To skip enter command \"Skip\".\nEnter the headline number: "))
-    if which_headline.lower() == "skip":
-        repetition("headline_loader()", headlines)
-    elif which_headline.lower() == "all":
-        print("Collecting metadata...")
+        "\nWhich headline do you want to see the details of? For the details of all headlines, enter \"all\". To skip enter \"s\".\nEnter the headline number: "))
+
+    if which_headline.lower() == "s":
+        repetition(0, headlines)
+    else:
+        print("Collecting details...")
+
         for i, j in enumerate(headlines):
-            time.sleep(2)
-            print(f"\nHEADLINE NUMBER {i + 1}")
-            for key, value in dict(j).items():
-                print(f"{str(key).upper()} : {value}")
-        repetition("headline_metadata_loader()", headlines)
-    elif int(which_headline) != -1:
-        print("Collecting metadata...")
-        time.sleep(1)
-        for i, j in enumerate(headlines):
-            if int(which_headline) == i + 1:
-                print(f"\nHEADLINE NUMBER {which_headline}")
-                for key, value in dict(j).items():
-                    print(f"{str(key).upper()} : {value}")
-        repetition("headline_metadata_loader()", headlines)
+            time.sleep(1)
+            if which_headline.isdigit() and int(which_headline) == i + 1:
+                headline_details_loop(i, j)
+            elif which_headline.lower() == "all":
+                headline_details_loop(i, j)
+        repetition(1, headlines) if which_headline.isdigit() else repetition( 0, headlines)
+
+
+def print_headlines(headlines):
+    for i, j in enumerate(headlines):
+        print(f"\nHEADLINE NUMBER {i + 1}")
+        for ind, jnd in enumerate(list(dict(j).items())):
+            if ind == 2 or ind == 3 or ind == 7:
+                # print(f"{str(list(jnd)[0]).upper()} : { list((dict(list(jnd)[1])).values())[1]}")
+                print(f"{str(list(jnd)[0]).upper()} : {list(jnd)[1]}")
+        time.sleep(2)
+    metadata = str(input(
+        "\nDo you want to see the details of any headline? (Y/n)\n-->: "))
+    if metadata.lower() == "y":
+        headline_details_loader(headlines)
+    elif metadata.lower() == "n":
+        repetition(0 , headlines)
 
 
 def headline_loader(keyword, language, category, country, pagesize):
-    global top_headlines
-    if country is not None and pagesize is not None:
-        top_headlines = news_api.get_top_headlines(q=keyword, language=language, category=category, country=country,
-                                                   page_size=pagesize, page=1)
-    elif country is None and pagesize is not None:
-        top_headlines = news_api.get_top_headlines(q=keyword, language=language, category=category, page_size=pagesize,
-                                                   page=1)
-    elif country is not None and pagesize is None:
-        top_headlines = news_api.get_top_headlines(q=keyword, language=language, category=category, country=country,
-                                                   page=1)
-    elif country is None and pagesize is None:
-        top_headlines = news_api.get_top_headlines(q=keyword, language=language, category=category, page=1)
+    params = { 'q': keyword, 'language': language, 'page': 1 }
+
+    if category is not None:
+        params['category'] = category
+
+    if country is not None:
+        params['country'] = country
+
+    if pagesize is not None:
+        params['page_size'] = pagesize
+
+    # Calling the API
+    top_headlines = news_api.get_top_headlines(**params)
 
     headlines = list(top_headlines.values())[2]
+
     time.sleep(1)
     if headlines:
-        for i, j in enumerate(headlines):
-            print(f"\nHEADLINE NUMBER {i + 1}")
-            for ind, jnd in enumerate(list(dict(j).items())):
-                if ind == 2 or ind == 3 or ind == 7:
-                    print(f"{str(list(jnd)[0]).upper()} : {list(jnd)[1]}")
-            time.sleep(2)
-        metadata = str(input(
-            "\nIf you want to see the metadeta of any headline then enter command \"Metadata\". To skip enter command \"Skip\".\nEnter command: "))
-        if metadata.lower() == "metadata":
-            headline_metadata_loader(headlines)
-        elif metadata.lower() == "skip":
-            repetition("headline_loader()", headlines)
+        print_headlines(headlines)
     else:
         print("SORRY! No Results Found!\nLet's try it again.".center(180))
         take_info()
 
 
 def take_info():
-    # global pagesize, country, category, language
-
-    category_dict = {"Business": 1, "Entertainment": 2, "General": 3, "Health": 4, "Science": 5, "Sports": 6,
-                     "Technology": 7}
-    countries_dict = {"ae": "United Arab Emirates", "ar": "Argentina", "at": "Austria", "au": "Australia",
-                      "be": "Belgium", "bg": "Bulgaria", "br": "Brazil", "ca": "Canada", "ch": "Switzerland",
-                      "cn": "China", "co": "Colombia", "cu": "Cuba", "cz": "Czech Republic", "de": "Germany",
-                      "eg": "Egypt", "fr": "France", "gb": "United Kingdom", "gr": "Greece", "hk": "Hong Kong",
-                      "hu": "Hungary", "id": "Indonesia", "ie": "Ireland", "il": "Israel", "in": "India", "it": "Italy",
-                      "jp": "Japan", "kr": "Korea Republic", "lt": "Lithuania", "lv": "Latvia", "ma": "Morocco",
-                      "mx": "Mexico", "my": "Malaysia", "ng": "Nigeria", "nl": "Netherlands", "no": "Norway",
-                      "nz": "New Zealand", "ph": "Philippines", "pk": "Pakistan", "pl": "Poland", "pt": "Portugal",
-                      "ro": "Romania", "rs": "Serbia", "ru": "Russian Federation", "sa": "Saudi Arabia", "se": "Sweden",
-                      "sg": "Singapore", "si": "Slovenia", "sk": "Slovak Republic", "th": "Thailand", "tr": "Turkey",
-                      "tw": "Taiwan", "ua": "Ukraine", "us": "United States", "ve": "Venezuela", "za": "South Africa"}
+    language_dict = {'Arabic': 'ar', 'German': 'de', 'English': 'en', 'Spanish': 'es', 'French': 'fr', 'Hebrew': 'he', 'Italian': 'it', 'Dutch': 'nl', 'Norwegian': 'no', 'Portuguese': 'pt', 'Russian': 'ru', 'Swedish': 'sv', 'Chinese': 'zh'}
+    category_dict = {"Business": 1, "Entertainment": 2, "General": 3, "Health": 4, "Science": 5, "Sports": 6, "Technology": 7}
+    countries_dict = { "United Arab Emirates": "ae", "Argentina": "ar", "Austria": "at", "Australia": "au", "Belgium": "be", "Bulgaria": "bg", "Brazil": "br", "Canada": "ca", "Switzerland": "ch", "China": "cn", "Colombia": "co", "Cuba": "cu", "Czech Republic": "cz", "Germany": "de", "Egypt": "eg", "France": "fr", "United Kingdom": "gb", "Greece": "gr", "Hong Kong": "hk", "Hungary": "hu", "Indonesia": "id", "Ireland": "ie", "Israel": "il", "India": "in", "Italy": "it", "Japan": "jp", "Korea Republic": "kr", "Lithuania": "lt", "Latvia": "lv", "Morocco": "ma", "Mexico": "mx", "Malaysia": "my", "Nigeria": "ng", "Netherlands": "nl", "Norway": "no", "New Zealand": "nz", "Philippines": "ph", "Pakistan": "pk", "Poland": "pl", "Portugal": "pt", "Romania": "ro", "Serbia": "rs", "Russian Federation": "ru", "Saudi Arabia": "sa", "Sweden": "se", "Singapore": "sg", "Slovenia": "si", "Slovak Republic": "sk", "Thailand": "th", "Turkey": "tr", "Taiwan": "tw", "Ukraine": "ua", "United States": "us", "Venezuela": "ve", "South Africa": "za" }
 
     # Taking keyword input
     keyword = str(input("KEYWORD:\nEnter a keyword to search for: "))
 
     # Taking language input
-    print("\nLANGUAGE:\nDo you want to specify a language? (Y/N)")
-    input_flag = str(input())
-    language = 'en' if input_flag.upper() == 'N' else inputLanguage()
-    print(language)
+    language = inputParameter(language_dict, 'language', 'en')
 
     # Taking category input
+    category = inputParameter(category_dict, 'category')
 
-    time.sleep(1)
-    print("\nCATEGORY:\nDo you want to specify a category? (Y/N)")
-    input_flag = str(input())
-    category = None if input_flag.upper() == 'N' else inputCategory()
+    # Taking country input
+    country = inputParameter(countries_dict, 'country')
 
-    for key, value in category_dict.items():
-        print(f"For {key}, enter {value}")
-    category_given = str(input("\nEnter the category to search in: "))
-    try:
-        while int(category_given) not in category_dict.values():
-            print("Please enter a valid value.")
-            category_given = input("Enter the category to search in: ").lower()
-        for key, value in category_dict.items():
-            if category_given.lower() == str(value).lower():
-                category = str(key).lower()
-    except Exception as e:
-        print("VALUE ERROR. The category is set to \"General\" by default.")
-        category = "general"
-
-    #Taking country input
-
-    time.sleep(1)
-    print("\nCOUNTRY:\nAvailable Countries:", ', '.join(countries_dict.values()), "\n")
-    country_given = str(input("Enter the country to search for: ")).lower()
-    n = 0
-    while country_given.title() not in countries_dict.values() and n < 4:
-        print("Please enter a valid country.")
-        country_given = str(input("Enter the country to search for: ")).lower()
-        n += 1
-    for key, value in countries_dict.items():
-        if country_given.lower() == str(value).lower():
-            country = str(key)
-    if n == 4:
-        print("VALUE ERROR. Country is set to default.")
-        country = None
-
-    #Taking number of news input
-    time.sleep(1)
+    # Taking number of news input
     print("\nNUMBER OF RESULTS:")
-    pagesize_given = (input("Enter the number of results you want (Min: 2, Max: 50) : "))
-    n1 = 0
-    try:
-        while (int(pagesize_given) < 2 or int(pagesize_given) > 51) and (n1 < 4):
-            print("Please enter a valid value.")
-            pagesize_given = (input("Enter the number of results you want (Min: 2, Max: 50) : "))
+    pagesize = int(input("Enter the number of results you want (Min: 2, Max: 50) : "))
+    if not (2 <= pagesize <= 51):
+        n1 = 0
+        while int(pagesize) < 2 or int(pagesize) > 51 and n1 < 4:
+            pagesize = (input("Please enter a valid value.\nEnter the number of results you want (Min: 2, Max: 50) : "))
             n1 += 1
-        if (int(pagesize_given) >= 2 and int(pagesize_given) <= 51):
-            pagesize = int(pagesize_given)
-        elif (int(pagesize_given) < 2 or int(pagesize_given) > 51) and (n1 == 4):
-            print("VALUE ERROR. The number of results is set to default.")
-            pagesize = None
-    except Exception as e:
+    else:
         print("VALUE ERROR. The number of results is set to default.")
         pagesize = None
 
     print("\nPlease Wait, Generating Headlines...")
-    #Calling other function to generate headlines
+
+    # Calling other function to generate headlines
     headline_loader(keyword, language, category, country, pagesize)
 
 
-def inputLanguage():
-    language_dict = {'Arabic': 'ar', 'German': 'de', 'English': 'en', 'Spanish': 'es', 'French': 'fr', 'Hebrew': 'he',
-                     'Italian': 'it', 'Dutch': 'nl', 'Norwegian': 'no', 'Portuguese': 'pt', 'Russian': 'ru',
-                     'Swedish': 'sv', 'Chinese': 'zh'}
-    print("\nAvailable Languages:", ', '.join(language_dict.keys()), "\n")
+def inputParameter(item_dict, item_word, default=None):
 
-    language_given = input("Enter the language to get results in: ").lower()
+    print("\n" + str(item_word).upper() + ":\nDo you want to specify a " + item_word + "? (Y/N)")
+    input_flag = str(input())
+    if input_flag.upper() == 'Y':
+        print("\nAvailable " + inflect.engine().plural(item_word).capitalize() + ": ")
+        for key,value in item_dict.items():
+            print(f"{key} : {value}")
 
-    try:
-        while language_given.capitalize() not in language_dict.keys():
-            print("Please enter a valid language.")
-            language_given = input("Enter the language to get results in: ").lower()
-        for key, value in language_dict.items():
-            if language_given.capitalize() == key:
-                return value
-    except Exception as e:
-        print("VALUE ERROR. The language is set to \"English\" by default.")
+        while True:
+            input_given = input("Enter the " + item_word + " code to get results in: ").lower()
+            if input_given == 's':
+                break
+
+            if input_given in str(item_dict.values()):
+                if item_word != "category":
+                    return input_given
+                return list(item_dict.keys())[int(input_given)-1].lower()
+            else:
+                print("Please enter a valid " + item_word + " (or enter s to skip).")
+
+    if item_word == "language":
+        print("Selected default language: English")
         return 'en'
 
+    return default
 
 
-take_info()
+try:
+    with open("news_api_key.txt", 'r') as api_file:
+        my_api_key = api_file.readline()
+    news_api = newsapi.NewsApiClient(api_key=my_api_key)
+    take_info()
+except FileNotFoundError as e:
+    print("Error fetching the API key.\n", e)
